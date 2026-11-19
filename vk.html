@@ -24,6 +24,8 @@
   // Она ничего не хранит и никуда не отправляет — только передаёт код входа обратно в локальный планер.
   (function () {
     var q = new URLSearchParams(location.search);
+    // Открыли как мини-приложение ВК (ВК передаёт vk_app_id) — это страница мини-приложения
+    if (q.get('vk_app_id')) { location.replace('miniapp.html' + location.search + location.hash); return; }
     var state = q.get('state') || '';
     var m = state.match(/^p(\d{2,5})\./);
     var port = m ? m[1] : '3100';
