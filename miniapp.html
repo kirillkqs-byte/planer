@@ -39,7 +39,8 @@
 <script src="https://unpkg.com/@vkontakte/vk-bridge@2.15.0/dist/browser.min.js"></script>
 <script>
 (function () {
-  var SCOPE = 'wall,photos,video,groups,stats,docs,offline';
+  // Разрешённые для мини-приложений доступы (offline ВК не принимает)
+  var SCOPE = 'wall,photos,video,groups,stats,docs';
   var q = new URLSearchParams(location.search);
   var appId = Number(q.get('vk_app_id') || 0);
   var state = decodeURIComponent((location.hash || '').replace(/^#/, ''));
