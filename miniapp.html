@@ -15,6 +15,9 @@
   p { margin: 0 0 12px; color: var(--muted); }
   ul { margin: 0 0 16px; padding-left: 20px; color: var(--muted); }
   button { width: 100%; height: 46px; border: 0; border-radius: 12px; font: inherit; font-weight: 650; cursor: pointer; background: var(--marker); color: #22252A; }
+  .send { display: flex; align-items: center; justify-content: center; height: 46px; border-radius: 12px; font-weight: 650; text-decoration: none; background: var(--marker); color: #22252A; }
+  .send[hidden] { display: none; }
+  button[hidden] { display: none; }
   button.sec { background: transparent; border: 1px solid var(--line); color: var(--text); margin-top: 10px; }
   .st { margin-top: 14px; font-size: 14px; }
   .ok { color: var(--ok); } .bad { color: var(--bad); }
@@ -31,7 +34,8 @@
     <li>статистика сообществ для отчётов.</li>
   </ul>
   <p>Ключ уходит только в планер на вашем компьютере. Эта страница его не хранит.</p>
-  <button id="go">Разрешить и отправить в Планер</button>
+  <button id="go">Разрешить доступ</button>
+  <a id="send" class="send" href="#" target="_blank" rel="noopener" hidden>Отправить в Планер</a>
   <button id="copy" class="sec" hidden>Скопировать ключ вручную</button>
   <div id="st" class="st"></div>
   <textarea id="tok" rows="3" readonly hidden aria-label="Ключ"></textarea>
@@ -65,10 +69,12 @@
       if (miss.length) say('ВК выдал не все доступы (нет: ' + miss.join(', ') + '). Нажмите кнопку ещё раз и разрешите всё.', 'bad');
       tokBox.value = token; copyBtn.hidden = false;
       if (port) {
+        // Браузер не даёт мини-приложению самому открыть адрес планера — нужна кнопка, которую нажимает человек
         var url = 'http://127.0.0.1:' + port + '/vk-miniapp/callback?state=' + encodeURIComponent(state) + '#token=' + encodeURIComponent(token) + '&scope=' + encodeURIComponent(scope);
-        var w = window.open(url, '_blank');
-        if (!w) { location.href = url; }
-        if (!miss.length) say('Готово! Ключ отправлен в планер — проверьте открывшуюся вкладку.', 'ok');
+        var send = document.getElementById('send');
+        send.href = url; send.hidden = false;
+        document.getElementById('go').hidden = true;
+        if (!miss.length) say('Ключ получен. Нажмите «Отправить в Планер» — откроется вкладка планера и ключ сохранится.', 'ok');
       } else if (!miss.length) say('Ключ получен. Скопируйте его и вставьте в планер: «Подключения» → ВКонтакте → «Ввести ключи вручную».', 'ok');
     } catch (e) {
       var msg = (e && e.error_data && (e.error_data.error_reason || e.error_data.error_msg)) || (e && e.message) || 'неизвестная ошибка';
