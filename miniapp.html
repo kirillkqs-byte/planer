@@ -48,8 +48,22 @@
   var q = new URLSearchParams(location.search);
   var appId = Number(q.get('vk_app_id') || 0);
   var state = decodeURIComponent((location.hash || '').replace(/^#/, ''));
-  var m = state.match(/^p(\d{2,5})\./);
-  var port = m ? m[1] : '';
+  // Адрес планера берём из state, который создал сам планер: o<base64url(https-адрес)> (сервер) или p<порт> (ПК).
+  // Ключ уходит только на проверенный адрес: свой origin страницы, список ниже или локальный компьютер.
+  var PLANER_HOSTS = ['179-253-146-214.sslip.io']; // добавьте свой домен, если страница лежит на GitHub Pages
+  var planerOrigin = (function () {
+    var mo = state.match(/^o([A-Za-z0-9_-]{4,200})\./);
+    if (mo) {
+      try {
+        var o = new URL(atob(mo[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (o.protocol === 'https:' && (o.origin === location.origin || PLANER_HOSTS.indexOf(o.hostname) >= 0)) return o.origin;
+      } catch (e) { /* не адрес */ }
+      return '';
+    }
+    var mp = state.match(/^p(\d{2,5})\./);
+    return mp ? 'http://127.0.0.1:' + mp[1] : '';
+  })();
+  var port = planerOrigin;
   var st = document.getElementById('st'), tokBox = document.getElementById('tok'), copyBtn = document.getElementById('copy');
   var bridge = window.vkBridge;
   function say(t, cls) { st.textContent = t; st.className = 'st ' + (cls || ''); }
@@ -70,11 +84,11 @@
       tokBox.value = token; copyBtn.hidden = false;
       if (port) {
         // Браузер не даёт мини-приложению самому открыть адрес планера — нужна кнопка, которую нажимает человек
-        var url = 'http://127.0.0.1:' + port + '/vk-miniapp/callback?state=' + encodeURIComponent(state) + '#token=' + encodeURIComponent(token) + '&scope=' + encodeURIComponent(scope);
+        var url = planerOrigin + '/vk-miniapp/callback?state=' + encodeURIComponent(state) + '#token=' + encodeURIComponent(token) + '&scope=' + encodeURIComponent(scope);
         var send = document.getElementById('send');
         send.href = url; send.hidden = false;
         document.getElementById('go').hidden = true;
-        if (!miss.length) say('Ключ получен. Нажмите «Отправить в Планер» — откроется вкладка планера и ключ сохранится.', 'ok');
+        if (!miss.length) say('Ключ получен. Нажмите «Отправить в Планер» — откроется вкладка планера (' + planerOrigin.replace(/^https?:\/\//, '') + ') и ключ сохранится.', 'ok');
       } else if (!miss.length) say('Ключ получен. Скопируйте его и вставьте в планер: «Подключения» → ВКонтакте → «Ввести ключи вручную».', 'ok');
     } catch (e) {
       var msg = (e && e.error_data && (e.error_data.error_reason || e.error_data.error_msg)) || (e && e.message) || 'неизвестная ошибка';
