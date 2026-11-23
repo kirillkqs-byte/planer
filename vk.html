@@ -27,9 +27,19 @@
     // Открыли как мини-приложение ВК (ВК передаёт vk_app_id) — это страница мини-приложения
     if (q.get('vk_app_id')) { location.replace('miniapp.html' + location.search + location.hash); return; }
     var state = q.get('state') || '';
-    var m = state.match(/^p(\d{2,5})\./);
-    var port = m ? m[1] : '3100';
-    var target = 'http://127.0.0.1:' + port + '/vk-oauth/callback' + location.search + location.hash;
+    // Адрес планера — из state (его создал сам планер): o<base64url(https-адрес)> или p<порт> для ПК
+    var PLANER_HOSTS = ['179-253-146-214.sslip.io']; // разрешённые https-планеры
+    var origin = 'http://127.0.0.1:3100';
+    var mo = state.match(/^o([A-Za-z0-9_-]{4,200})\./), mp = state.match(/^p(\d{2,5})\./);
+    if (mo) {
+      origin = '';
+      try {
+        var o = new URL(atob(mo[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (o.protocol === 'https:' && PLANER_HOSTS.indexOf(o.hostname) >= 0) origin = o.origin;
+      } catch (e) { /* не адрес */ }
+    } else if (mp) origin = 'http://127.0.0.1:' + mp[1];
+    if (!origin) { document.getElementById('msg').textContent = 'Этот адрес планера не разрешён на странице-переходнике.'; return; }
+    var target = origin + '/vk-oauth/callback' + location.search + location.hash;
     var go = document.getElementById('go');
     go.href = target;
     if (!q.get('code') && !q.get('error')) {
